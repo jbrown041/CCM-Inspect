@@ -57,19 +57,22 @@ export default function SidebarNav() {
         sx={{
           width: 44,
           height: 44,
+          borderRadius: 2,
+          bgcolor: '#1a1a2e',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
           mb: 3,
           flexShrink: 0,
+          overflow: 'hidden',
         }}
       >
         <Box
           component="img"
           src="/radius-logo.png"
           alt="Radius"
-          sx={{ width: 44, height: 44, objectFit: 'contain' }}
+          sx={{ width: 34, height: 34, objectFit: 'contain' }}
         />
       </Box>
 
