@@ -100,7 +100,7 @@ export const allJobs: Job[] = [
     relatedDocuments: [
       { id: 'd-1', name: 'Warranty Document 2024.pdf', type: 'PDF', url: '#' },
     ],
-    primaryAsset: { id: 'a-1', type: 'satellite_image', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0323,38.8923,-77.0289,38.8947&bboxSR=4326&size=1200,900&imageSR=4326&format=jpg&f=image', label: 'Rooftop Satellite View' },
+    primaryAsset: { id: 'a-1', type: 'satellite_image', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0322,38.8930,-77.0287,38.8950&bboxSR=4326&size=1200,900&imageSR=4326&format=jpg&f=image', label: 'Rooftop Satellite View' },
     inspectionVersions: [],
     coordinates: { lat: 38.8951, lng: -77.0364 },
     repId: 'rep-1',

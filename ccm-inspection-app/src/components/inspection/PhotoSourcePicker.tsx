@@ -29,10 +29,10 @@ interface Props {
 
 export type PhotoSource = 'applicator_drawing' | 'satellite' | 'scratch' | 'upload'
 
-// ArcGIS World Imagery export — Ronald Reagan Building rooftop, DC (large flat-roof federal building)
-// Tight bbox (~250m) keeps imagery at native resolution for a crisp, clear result
+// ArcGIS World Imagery export — Ronald Reagan Building rooftop, DC
+// bbox sized to 300m×225m (4:3 real-world ratio) to match 1200×900 pixel output — no distortion
 const SAMPLE_SATELLITE_URL =
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0323,38.8923,-77.0289,38.8947&bboxSR=4326&size=1200,900&imageSR=4326&format=jpg&f=image'
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0322,38.8930,-77.0287,38.8950&bboxSR=4326&size=1200,900&imageSR=4326&format=jpg&f=image'
 
 interface OptionCard {
   source: PhotoSource
