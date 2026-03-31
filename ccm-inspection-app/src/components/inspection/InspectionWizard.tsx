@@ -35,9 +35,8 @@ export default function InspectionWizard() {
 
   const [activeStep, setActiveStep] = useState(0)
   const [selectedMarkupId, setSelectedMarkupId] = useState<string | null>(null)
-
-  // Local draft markups — sync to context on step changes and on complete
   const [draftMarkups, setDraftMarkups] = useState<Markup[]>(version?.markups ?? [])
+  const [markedUpImageUrl, setMarkedUpImageUrl] = useState<string | null>(null)
 
   if (!job || !version) {
     return (
@@ -178,6 +177,7 @@ export default function InspectionWizard() {
             onSelectMarkup={setSelectedMarkupId}
             onAddMarkup={handleAddMarkup}
             onDeleteMarkup={handleDeleteMarkup}
+            onSaveImage={setMarkedUpImageUrl}
           />
         )}
 
@@ -205,6 +205,7 @@ export default function InspectionWizard() {
             job={job}
             version={version}
             markups={draftMarkups}
+            markedUpImageUrl={markedUpImageUrl}
             onBackToJob={handleExit}
           />
         )}

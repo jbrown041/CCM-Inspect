@@ -22,10 +22,11 @@ interface Props {
   job: Job
   version: InspectionVersion
   markups: Markup[]
+  markedUpImageUrl?: string | null
   onBackToJob: () => void
 }
 
-export default function GenerateReportStep({ job, version, markups, onBackToJob }: Props) {
+export default function GenerateReportStep({ job, version, markups, markedUpImageUrl, onBackToJob }: Props) {
   const generatedDate = dayjs().format('MMMM D, YYYY')
 
   const bySeverity = SEVERITY_LEVELS.map((level) => ({
@@ -245,47 +246,60 @@ export default function GenerateReportStep({ job, version, markups, onBackToJob 
           <Paper elevation={0} sx={{ borderRadius: 0, p: 4, bgcolor: '#F8F9FB' }}>
             <Typography variant="h6" fontWeight={700} gutterBottom>Marked-Up Visuals</Typography>
             <Divider sx={{ mb: 2 }} />
-            <Box
-              sx={{
-                width: '100%',
-                height: 200,
-                bgcolor: '#2d3849',
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)' }}>
-                {job.primaryAsset.label}
-              </Typography>
-              {/* Render callouts */}
-              {callouts.map((m, i) => (
-                <Box
-                  key={m.id}
-                  sx={{
-                    position: 'absolute',
-                    left: `${m.position.x}%`,
-                    top: `${m.position.y}%`,
-                    transform: 'translate(-50%,-50%)',
-                    width: 22,
-                    height: 22,
-                    borderRadius: '50%',
-                    bgcolor: SEVERITY_CONFIG[m.severity as SeverityLevel]?.color ?? '#1565C0',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                  }}
-                >
-                  {i + 1}
-                </Box>
-              ))}
-            </Box>
+            {markedUpImageUrl ? (
+              <Box
+                component="img"
+                src={markedUpImageUrl}
+                alt="Marked-up inspection canvas"
+                sx={{ width: '100%', borderRadius: 1, display: 'block', boxShadow: 2 }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: '100%',
+                  height: 200,
+                  bgcolor: '#2d3849',
+                  borderRadius: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+              >
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {job.primaryAsset.label}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.65rem' }}>
+                  Use "Save" in the markup step to capture the canvas image
+                </Typography>
+                {callouts.map((m, i) => (
+                  <Box
+                    key={m.id}
+                    sx={{
+                      position: 'absolute',
+                      left: `${m.position.x}%`,
+                      top: `${m.position.y}%`,
+                      transform: 'translate(-50%,-50%)',
+                      width: 22,
+                      height: 22,
+                      borderRadius: '50%',
+                      bgcolor: SEVERITY_CONFIG[m.severity as SeverityLevel]?.color ?? '#1565C0',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {i + 1}
+                  </Box>
+                ))}
+              </Box>
+            )}
             {callouts.length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
