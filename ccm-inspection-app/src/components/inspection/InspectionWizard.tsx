@@ -37,6 +37,7 @@ export default function InspectionWizard() {
   const [selectedMarkupId, setSelectedMarkupId] = useState<string | null>(null)
   const [draftMarkups, setDraftMarkups] = useState<Markup[]>(version?.markups ?? [])
   const [markedUpImageUrl, setMarkedUpImageUrl] = useState<string | null>(null)
+  const [capturedPhotoUrl, setCapturedPhotoUrl] = useState<string | null>(null)
 
   if (!job || !version) {
     return (
@@ -178,6 +179,8 @@ export default function InspectionWizard() {
             onAddMarkup={handleAddMarkup}
             onDeleteMarkup={handleDeleteMarkup}
             onSaveImage={setMarkedUpImageUrl}
+            photoUrl={capturedPhotoUrl}
+            onPhotoCapture={setCapturedPhotoUrl}
           />
         )}
 

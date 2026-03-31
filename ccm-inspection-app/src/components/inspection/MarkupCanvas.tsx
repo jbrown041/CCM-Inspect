@@ -21,6 +21,7 @@ import ClearAllIcon from '@mui/icons-material/ClearAll'
 import SaveAltIcon from '@mui/icons-material/SaveAlt'
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera'
+import AddAPhotoIcon from '@mui/icons-material/AddAPhoto'
 import ArchitectureIcon from '@mui/icons-material/Architecture'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { fabric } from 'fabric'
@@ -38,6 +39,8 @@ interface Props {
   onDeleteMarkup: (id: string) => void
   onClearAll?: () => void
   onSaveImage?: (dataUrl: string) => void
+  photoUrl?: string | null
+  onPhotoCapture?: (dataUrl: string) => void
 }
 
 const DRAW_COLORS = [
@@ -214,6 +217,8 @@ export default function MarkupCanvas({
   onDeleteMarkup,
   onClearAll,
   onSaveImage,
+  photoUrl,
+  onPhotoCapture,
 }: Props) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -224,6 +229,8 @@ export default function MarkupCanvas({
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<fabric.Canvas | null>(null)
   const markupObjMap = useRef<Map<string, fabric.Object>>(new Map())
+  const bgImageRef = useRef<fabric.Image | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Stable refs for Fabric event handlers (avoid stale closures)
   const activeToolRef = useRef<Tool>('pin')
@@ -438,6 +445,13 @@ export default function MarkupCanvas({
       const { width, height } = entries[0].contentRect
       if (width > 0 && height > 0) {
         canvas.setDimensions({ width, height })
+        // Re-scale background photo to fill new dimensions
+        if (bgImageRef.current) {
+          bgImageRef.current.set({
+            scaleX: width / (bgImageRef.current.width ?? 1),
+            scaleY: height / (bgImageRef.current.height ?? 1),
+          })
+        }
         canvas.renderAll()
       }
     })
@@ -450,6 +464,35 @@ export default function MarkupCanvas({
       markupObjMap.current.clear()
     }
   }, [assetType]) // re-init only if asset type changes
+
+  // ── Load photo as Fabric background image ─────────────────────────
+  useEffect(() => {
+    const canvas = fabricRef.current
+    if (!canvas || !photoUrl) return
+    fabric.Image.fromURL(photoUrl, (img) => {
+      bgImageRef.current = img
+      canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+        scaleX: canvas.width! / (img.width ?? 1),
+        scaleY: canvas.height! / (img.height ?? 1),
+      })
+    })
+  }, [photoUrl])
+
+  // ── Photo file input handler ─────────────────────────────────────────
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      const dataUrl = evt.target?.result as string
+      if (dataUrl && onPhotoCapture) onPhotoCapture(dataUrl)
+    }
+    reader.readAsDataURL(file)
+    // Reset input so the same file can be re-selected if needed
+    e.target.value = ''
+  }, [onPhotoCapture])
+
+  const handleAddPhoto = useCallback(() => fileInputRef.current?.click(), [])
 
   // ── Sync activeTool / drawColor → Fabric drawing mode ───────────────
   useEffect(() => {
@@ -568,6 +611,27 @@ export default function MarkupCanvas({
             borderColor: 'divider',
           }}
         >
+          {/* Photo capture button */}
+          <Tooltip title={photoUrl ? 'Replace photo' : 'Add photo'} placement="right">
+            <IconButton
+              size="small"
+              onClick={handleAddPhoto}
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 1.5,
+                bgcolor: photoUrl ? 'success.main' : 'primary.main',
+                color: 'white',
+                '&:hover': { bgcolor: photoUrl ? 'success.dark' : 'primary.dark' },
+                mb: 0.5,
+              }}
+            >
+              <AddAPhotoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          <Divider flexItem sx={{ my: 0.5, mx: 1 }} />
+
           {/* Tool buttons */}
           {TOOLS.map((tool) => (
             <Tooltip key={tool.type} title={tool.label} placement="right">
@@ -704,8 +768,52 @@ export default function MarkupCanvas({
         {/* Fabric canvas — Fabric will wrap this in .canvas-container */}
         <canvas ref={canvasElRef} />
 
-        {/* Empty canvas hint */}
-        {markups.length === 0 && (
+        {/* No photo yet — big CTA overlay */}
+        {!photoUrl && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+              bgcolor: 'rgba(0,0,0,0.35)',
+              backdropFilter: 'blur(2px)',
+            }}
+          >
+            <Box
+              onClick={handleAddPhoto}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 1.5,
+                p: 4,
+                borderRadius: 3,
+                border: '2px dashed rgba(255,255,255,0.4)',
+                cursor: 'pointer',
+                color: 'white',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.7)' },
+                transition: 'all 0.2s ease',
+                userSelect: 'none',
+              }}
+            >
+              <AddAPhotoIcon sx={{ fontSize: 56, opacity: 0.85 }} />
+              <Typography variant="h6" fontWeight={600} sx={{ opacity: 0.9 }}>
+                Add a photo
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.65, textAlign: 'center', maxWidth: 220 }}>
+                Take a photo or upload from your gallery to begin marking up
+              </Typography>
+            </Box>
+          </Box>
+        )}
+
+        {/* Empty canvas hint (only when photo is loaded and no markups yet) */}
+        {photoUrl && markups.length === 0 && (
           <Box
             sx={{
               position: 'absolute',
@@ -724,7 +832,7 @@ export default function MarkupCanvas({
             }}
           >
             <Typography variant="caption">
-              Select a tool and click the canvas to add a markup
+              Select a tool and tap the photo to add a markup
             </Typography>
           </Box>
         )}
@@ -817,6 +925,24 @@ export default function MarkupCanvas({
                 />
               </Tooltip>
             ))}
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'rgba(255,255,255,0.15)' }} />
+            {/* Photo capture */}
+            <Tooltip title={photoUrl ? 'Replace photo' : 'Add photo'} placement="top">
+              <IconButton
+                size="medium"
+                onClick={handleAddPhoto}
+                sx={{
+                  flexShrink: 0,
+                  width: 52,
+                  height: 52,
+                  bgcolor: photoUrl ? 'rgba(56,142,60,0.25)' : 'rgba(25,118,210,0.25)',
+                  color: photoUrl ? '#81C784' : '#90CAF9',
+                  '& svg': { fontSize: '1.4rem' },
+                }}
+              >
+                <AddAPhotoIcon />
+              </IconButton>
+            </Tooltip>
             <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'rgba(255,255,255,0.15)' }} />
             {/* Action buttons */}
             <Tooltip title="Undo" placement="top">
@@ -923,6 +1049,14 @@ export default function MarkupCanvas({
           })()}
         </Box>
       )}
+      {/* Hidden file input for photo capture / gallery upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
     </Box>
   )
 }
