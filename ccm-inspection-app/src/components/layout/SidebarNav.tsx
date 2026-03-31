@@ -9,8 +9,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 const NAV_ITEMS = [
   { label: 'Inspections', icon: FindInPageOutlinedIcon, path: '/jobs' as string | null },
   { label: 'Schedule', icon: CalendarTodayOutlinedIcon, path: '/schedule' as string | null },
-  { label: 'Jobs', icon: InventoryOutlinedIcon, path: null },
-  { label: 'Catalog', icon: MenuBookOutlinedIcon, path: null },
+  // { label: 'Jobs',    icon: InventoryOutlinedIcon, path: null },   // hidden — restore later
+  // { label: 'Catalog', icon: MenuBookOutlinedIcon,  path: null },   // hidden — restore later
   { label: 'Account', icon: PersonOutlinedIcon, path: null },
 ]
 
