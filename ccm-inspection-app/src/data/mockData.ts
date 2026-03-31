@@ -100,7 +100,7 @@ export const allJobs: Job[] = [
     relatedDocuments: [
       { id: 'd-1', name: 'Warranty Document 2024.pdf', type: 'PDF', url: '#' },
     ],
-    primaryAsset: { id: 'a-1', type: 'satellite_image', url: '', label: 'Rooftop Satellite View' },
+    primaryAsset: { id: 'a-1', type: 'satellite_image', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/17/49756/39561', label: 'Rooftop Satellite View' },
     inspectionVersions: [],
     coordinates: { lat: 39.7684, lng: -86.1581 },
     repId: 'rep-1',
@@ -164,7 +164,7 @@ export const allJobs: Job[] = [
       { id: 'd-2', name: 'Assembly Letter - Lakefront.pdf', type: 'PDF', url: '#' },
       { id: 'd-3', name: 'Installation Photos.zip', type: 'Archive', url: '#' },
     ],
-    primaryAsset: { id: 'a-3', type: 'roof_drawing', url: '', label: 'Roof Plan Drawing' },
+    primaryAsset: { id: 'a-3', type: 'roof_drawing', url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/ARS_building_floor_plan.jpg/640px-ARS_building_floor_plan.jpg', label: 'Roof Plan Drawing' },
     inspectionVersions: [],
     coordinates: { lat: 41.8781, lng: -87.6298 },
     repId: 'rep-1',
@@ -277,7 +277,7 @@ export const allJobs: Job[] = [
     relatedDocuments: [
       { id: 'd-5', name: 'Installation Specs - Tri-State.pdf', type: 'PDF', url: '#' },
     ],
-    primaryAsset: { id: 'a-7', type: 'roof_drawing', url: '', label: 'New Install Roof Plan' },
+    primaryAsset: { id: 'a-7', type: 'roof_drawing', url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/ARS_building_floor_plan.jpg/640px-ARS_building_floor_plan.jpg', label: 'New Install Roof Plan' },
     inspectionVersions: [],
     coordinates: { lat: 39.1031, lng: -84.512 },
     repId: 'rep-1',

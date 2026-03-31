@@ -25,14 +25,17 @@ import AddAPhotoIcon from '@mui/icons-material/AddAPhoto'
 import ArchitectureIcon from '@mui/icons-material/Architecture'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { fabric } from 'fabric'
-import type { Markup, AnnotationType } from '../../types'
+import type { Markup, AnnotationType, Asset } from '../../types'
 import { SEVERITY_CONFIG } from '../../data/inspectionConstants'
 import type { SeverityLevel } from '../../data/inspectionConstants'
+import PhotoSourcePicker from './PhotoSourcePicker'
 
 interface Props {
   markups: Markup[]
   assetType: string
   assetLabel: string
+  /** The applicator's uploaded asset for this job, used in the source picker */
+  applicatorAsset?: Asset | null
   selectedMarkupId: string | null
   onSelectMarkup: (id: string | null) => void
   onAddMarkup: (markup: Markup) => void
@@ -211,6 +214,7 @@ export default function MarkupCanvas({
   markups,
   assetType,
   assetLabel,
+  applicatorAsset,
   selectedMarkupId,
   onSelectMarkup,
   onAddMarkup,
@@ -224,6 +228,7 @@ export default function MarkupCanvas({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [activeTool, setActiveTool] = useState<Tool>('pin')
   const [drawColor, setDrawColor] = useState('#D32F2F')
+  const [pickerOpen, setPickerOpen] = useState(!photoUrl)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasElRef = useRef<HTMLCanvasElement>(null)
@@ -492,7 +497,7 @@ export default function MarkupCanvas({
     e.target.value = ''
   }, [onPhotoCapture])
 
-  const handleAddPhoto = useCallback(() => fileInputRef.current?.click(), [])
+  const handleAddPhoto = useCallback(() => setPickerOpen(true), [])
 
   // ── Sync activeTool / drawColor → Fabric drawing mode ───────────────
   useEffect(() => {
@@ -768,7 +773,7 @@ export default function MarkupCanvas({
         {/* Fabric canvas — Fabric will wrap this in .canvas-container */}
         <canvas ref={canvasElRef} />
 
-        {/* No photo yet — big CTA overlay */}
+        {/* No photo yet — source picker CTA overlay */}
         {!photoUrl && (
           <Box
             sx={{
@@ -785,7 +790,7 @@ export default function MarkupCanvas({
             }}
           >
             <Box
-              onClick={handleAddPhoto}
+              onClick={() => setPickerOpen(true)}
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -803,10 +808,10 @@ export default function MarkupCanvas({
             >
               <AddAPhotoIcon sx={{ fontSize: 56, opacity: 0.85 }} />
               <Typography variant="h6" fontWeight={600} sx={{ opacity: 0.9 }}>
-                Add a photo
+                Add a drawing or photo
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.65, textAlign: 'center', maxWidth: 220 }}>
-                Take a photo or upload from your gallery to begin marking up
+              <Typography variant="body2" sx={{ opacity: 0.65, textAlign: 'center', maxWidth: 240 }}>
+                Choose from the applicator drawing, a satellite image, or upload your own
               </Typography>
             </Box>
           </Box>
@@ -1056,6 +1061,17 @@ export default function MarkupCanvas({
         accept="image/*"
         style={{ display: 'none' }}
         onChange={handleFileChange}
+      />
+
+      {/* Photo source picker dialog */}
+      <PhotoSourcePicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        applicatorAsset={applicatorAsset}
+        fileInputRef={fileInputRef}
+        onSelect={(_source, dataUrl) => {
+          if (dataUrl && onPhotoCapture) onPhotoCapture(dataUrl)
+        }}
       />
     </Box>
   )

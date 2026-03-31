@@ -174,6 +174,7 @@ export default function InspectionWizard() {
             markups={draftMarkups}
             assetType={job.primaryAsset.type}
             assetLabel={job.primaryAsset.label}
+            applicatorAsset={job.primaryAsset}
             selectedMarkupId={selectedMarkupId}
             onSelectMarkup={setSelectedMarkupId}
             onAddMarkup={handleAddMarkup}
