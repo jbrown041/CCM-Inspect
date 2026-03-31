@@ -29,10 +29,10 @@ interface Props {
 
 export type PhotoSource = 'applicator_drawing' | 'satellite' | 'scratch' | 'upload'
 
-// ArcGIS World Imagery export — Washington DC Federal Triangle area, 800×600 px
-// Using the MapServer export endpoint for a clean, full-resolution aerial image
+// ArcGIS World Imagery export — Ronald Reagan Building rooftop, DC (large flat-roof federal building)
+// Tight bbox (~250m) keeps imagery at native resolution for a crisp, clear result
 const SAMPLE_SATELLITE_URL =
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0469,38.8904,-77.0369,38.9004&bboxSR=4326&size=800,600&imageSR=4326&format=jpg&f=image'
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0323,38.8923,-77.0289,38.8947&bboxSR=4326&size=1200,900&imageSR=4326&format=jpg&f=image'
 
 interface OptionCard {
   source: PhotoSource
