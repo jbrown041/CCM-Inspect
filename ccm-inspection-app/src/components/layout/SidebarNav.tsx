@@ -58,7 +58,7 @@ export default function SidebarNav() {
           width: 44,
           height: 44,
           borderRadius: 2,
-          bgcolor: '#1a1a2e',
+          bgcolor: '#ffffff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
