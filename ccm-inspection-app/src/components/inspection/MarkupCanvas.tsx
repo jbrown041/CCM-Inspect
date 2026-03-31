@@ -476,20 +476,22 @@ export default function MarkupCanvas({
     })
 
     // ── Mouse wheel: zoom ─────────────────────────────────────────────
-    // Native listener with { passive: false } so preventDefault() is allowed
-    // (browsers make wheel events passive by default, blocking Fabric's preventDefault)
-    const upperCanvas = (canvas as any).upperCanvasEl as HTMLElement ?? canvasElRef.current!
+    // Attach to the container div with { passive: false } so preventDefault works.
+    // Browsers mark wheel events passive by default; attaching to the Fabric
+    // internal canvas element doesn't reliably intercept them.
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
+      e.stopPropagation()
       let zoom = canvas.getZoom()
       zoom *= 0.999 ** e.deltaY
       zoom = Math.max(0.5, Math.min(5, zoom))
+      // e.offsetX/Y is relative to the container, which matches canvas coords at zoom=1
       canvas.zoomToPoint(new fabric.Point(e.offsetX, e.offsetY), zoom)
       const rounded = Math.round(zoom * 100) / 100
       setZoomLevel(rounded)
       zoomLevelRef.current = rounded
     }
-    upperCanvas.addEventListener('wheel', onWheel, { passive: false })
+    container.addEventListener('wheel', onWheel, { passive: false })
 
     // ── ResizeObserver ────────────────────────────────────────────────
     const ro = new ResizeObserver((entries) => {
@@ -514,7 +516,7 @@ export default function MarkupCanvas({
 
     return () => {
       ro.disconnect()
-      upperCanvas.removeEventListener('wheel', onWheel)
+      container.removeEventListener('wheel', onWheel)
       canvas.dispose()
       fabricRef.current = null
       markupObjMap.current.clear()
@@ -817,32 +819,6 @@ export default function MarkupCanvas({
             </IconButton>
           </Tooltip>
 
-          <Divider flexItem sx={{ my: 0.5, mx: 1 }} />
-
-          <Tooltip title="Zoom in (scroll wheel)" placement="right">
-            <IconButton size="small" onClick={handleZoomIn}
-              sx={{ width: 40, height: 40, borderRadius: 1.5, color: 'text.secondary' }}
-            >
-              <ZoomInIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Zoom out" placement="right">
-            <IconButton size="small" onClick={handleZoomOut}
-              sx={{ width: 40, height: 40, borderRadius: 1.5, color: 'text.secondary' }}
-            >
-              <ZoomOutIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {zoomLevel !== 1 && (
-            <Tooltip title="Reset zoom" placement="right">
-              <IconButton size="small" onClick={handleZoomReset}
-                sx={{ width: 40, height: 40, borderRadius: 1.5, color: 'primary.main' }}
-              >
-                <ZoomOutMapIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem', textAlign: 'center', px: 0.5, mt: 0.5 }}>
             {TOOLS.find((t) => t.type === activeTool)?.label}
           </Typography>
@@ -994,32 +970,60 @@ export default function MarkupCanvas({
           </Box>
         )}
 
-        {/* Zoom level badge */}
-        {zoomLevel !== 1 && (
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 16,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 2,
-              bgcolor: 'rgba(0,0,0,0.55)',
-              color: 'white',
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 4,
-              backdropFilter: 'blur(4px)',
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-            }}
-          >
-            <Typography variant="caption" fontWeight={600}>
-              {Math.round(zoomLevel * 100)}% — Alt+drag to pan
-            </Typography>
-          </Box>
-        )}
+        {/* Floating zoom controls — bottom-left corner */}
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 14,
+            left: 14,
+            zIndex: 3,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.5,
+          }}
+        >
+          <Tooltip title="Zoom in (scroll wheel)" placement="right">
+            <IconButton
+              size="small"
+              onClick={handleZoomIn}
+              sx={{
+                width: 32, height: 32, borderRadius: 1,
+                bgcolor: 'rgba(0,0,0,0.6)', color: 'white', backdropFilter: 'blur(4px)',
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+              }}
+            >
+              <ZoomInIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Zoom out" placement="right">
+            <IconButton
+              size="small"
+              onClick={handleZoomOut}
+              sx={{
+                width: 32, height: 32, borderRadius: 1,
+                bgcolor: 'rgba(0,0,0,0.6)', color: 'white', backdropFilter: 'blur(4px)',
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+              }}
+            >
+              <ZoomOutIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+          {zoomLevel !== 1 && (
+            <Tooltip title={`${Math.round(zoomLevel * 100)}% — click to reset`} placement="right">
+              <IconButton
+                size="small"
+                onClick={handleZoomReset}
+                sx={{
+                  width: 32, height: 32, borderRadius: 1,
+                  bgcolor: 'primary.main', color: 'white',
+                  '&:hover': { bgcolor: 'primary.dark' },
+                }}
+              >
+                <ZoomOutMapIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
       </Box>
 
       {/* ── Horizontal toolbar (mobile) ─────────────────────────── */}
@@ -1134,30 +1138,6 @@ export default function MarkupCanvas({
                 <SaveAltIcon />
               </IconButton>
             </Tooltip>
-            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'rgba(255,255,255,0.15)' }} />
-            <Tooltip title="Zoom in" placement="top">
-              <IconButton size="medium" onClick={handleZoomIn}
-                sx={{ flexShrink: 0, width: 52, height: 52, color: 'rgba(255,255,255,0.7)' }}
-              >
-                <ZoomInIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Zoom out" placement="top">
-              <IconButton size="medium" onClick={handleZoomOut}
-                sx={{ flexShrink: 0, width: 52, height: 52, color: 'rgba(255,255,255,0.7)' }}
-              >
-                <ZoomOutIcon />
-              </IconButton>
-            </Tooltip>
-            {zoomLevel !== 1 && (
-              <Tooltip title="Reset zoom" placement="top">
-                <IconButton size="medium" onClick={handleZoomReset}
-                  sx={{ flexShrink: 0, width: 52, height: 52, color: '#90CAF9' }}
-                >
-                  <ZoomOutMapIcon />
-                </IconButton>
-              </Tooltip>
-            )}
           </Box>
         </Box>
       )}
