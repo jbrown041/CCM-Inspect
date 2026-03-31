@@ -1,8 +1,8 @@
 import { Box, Tooltip, Typography } from '@mui/material'
 import FindInPageOutlinedIcon from '@mui/icons-material/FindInPageOutlined'
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined'
-import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined'
-import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined'
+// import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined'  // Jobs — restore later
+// import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined'     // Catalog — restore later
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined'
 import { useNavigate, useLocation } from 'react-router-dom'
 
