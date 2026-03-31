@@ -19,6 +19,9 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import UndoIcon from '@mui/icons-material/Undo'
 import ClearAllIcon from '@mui/icons-material/ClearAll'
 import SaveAltIcon from '@mui/icons-material/SaveAlt'
+import ZoomInIcon from '@mui/icons-material/ZoomIn'
+import ZoomOutIcon from '@mui/icons-material/ZoomOut'
+import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap'
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera'
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto'
@@ -229,6 +232,7 @@ export default function MarkupCanvas({
   const [activeTool, setActiveTool] = useState<Tool>('pin')
   const [drawColor, setDrawColor] = useState('#D32F2F')
   const [pickerOpen, setPickerOpen] = useState(!photoUrl)
+  const [zoomLevel, setZoomLevel] = useState(1)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasElRef = useRef<HTMLCanvasElement>(null)
@@ -236,6 +240,9 @@ export default function MarkupCanvas({
   const markupObjMap = useRef<Map<string, fabric.Object>>(new Map())
   const bgImageRef = useRef<fabric.Image | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const zoomLevelRef = useRef(1)
+  const isPanningRef = useRef(false)
+  const lastPanPosRef = useRef({ x: 0, y: 0 })
 
   // Stable refs for Fabric event handlers (avoid stale closures)
   const activeToolRef = useRef<Tool>('pin')
@@ -342,6 +349,13 @@ export default function MarkupCanvas({
 
     // ── Fabric event: mouse down ─────────────────────────────────────
     canvas.on('mouse:down', (e: any) => {
+      // Alt+drag or middle-click = pan
+      if (e.e.altKey || (e.e as MouseEvent).button === 1) {
+        isPanningRef.current = true
+        lastPanPosRef.current = { x: e.e.clientX, y: e.e.clientY }
+        canvas.setCursor('grabbing')
+        return
+      }
       const tool = activeToolRef.current
       if (canvas.isDrawingMode) return
       const pointer = canvas.getPointer(e.e)
@@ -394,6 +408,15 @@ export default function MarkupCanvas({
 
     // ── Fabric event: mouse move (drawing preview) ───────────────────
     canvas.on('mouse:move', (e: any) => {
+      // Handle pan drag
+      if (isPanningRef.current) {
+        const vpt = canvas.viewportTransform!
+        vpt[4] += e.e.clientX - lastPanPosRef.current.x
+        vpt[5] += e.e.clientY - lastPanPosRef.current.y
+        lastPanPosRef.current = { x: e.e.clientX, y: e.e.clientY }
+        canvas.requestRenderAll()
+        return
+      }
       if (!drawingRef.current.active || !drawingRef.current.start || !drawingRef.current.tempObj) return
       const pointer = canvas.getPointer(e.e)
       const start = drawingRef.current.start
@@ -414,6 +437,13 @@ export default function MarkupCanvas({
 
     // ── Fabric event: mouse up (finish rect/line) ────────────────────
     canvas.on('mouse:up', (e: any) => {
+      // End pan
+      if (isPanningRef.current) {
+        isPanningRef.current = false
+        canvas.setCursor('default')
+        canvas.setViewportTransform(canvas.viewportTransform!)
+        return
+      }
       if (!drawingRef.current.active || !drawingRef.current.start) return
 
       const tool = activeToolRef.current
@@ -445,6 +475,20 @@ export default function MarkupCanvas({
       canvas.renderAll()
     })
 
+    // ── Mouse wheel: zoom ─────────────────────────────────────────────
+    canvas.on('mouse:wheel', (opt: any) => {
+      const delta = opt.e.deltaY
+      let zoom = canvas.getZoom()
+      zoom *= 0.999 ** delta
+      zoom = Math.max(0.5, Math.min(5, zoom))
+      canvas.zoomToPoint(new fabric.Point(opt.e.offsetX, opt.e.offsetY), zoom)
+      const rounded = Math.round(zoom * 100) / 100
+      setZoomLevel(rounded)
+      zoomLevelRef.current = rounded
+      opt.e.preventDefault()
+      opt.e.stopPropagation()
+    })
+
     // ── ResizeObserver ────────────────────────────────────────────────
     const ro = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect
@@ -457,6 +501,10 @@ export default function MarkupCanvas({
             scaleY: height / (bgImageRef.current.height ?? 1),
           })
         }
+        // Reset zoom/pan on resize
+        canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
+        setZoomLevel(1)
+        zoomLevelRef.current = 1
         canvas.renderAll()
       }
     })
@@ -470,18 +518,32 @@ export default function MarkupCanvas({
     }
   }, [assetType]) // re-init only if asset type changes
 
-  // ── Load photo as Fabric background image ─────────────────────────
+  // ── Load photo as canvas object so it zooms with the viewport ────────
   useEffect(() => {
     const canvas = fabricRef.current
     if (!canvas || !photoUrl) return
     fabric.Image.fromURL(
       photoUrl,
       (img) => {
-        bgImageRef.current = img
-        canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+        // Remove previous bg image object
+        if (bgImageRef.current) canvas.remove(bgImageRef.current)
+        img.set({
+          left: 0,
+          top: 0,
           scaleX: canvas.width! / (img.width ?? 1),
           scaleY: canvas.height! / (img.height ?? 1),
+          selectable: false,
+          evented: false,
+          hoverCursor: 'default',
         })
+        bgImageRef.current = img
+        canvas.add(img)
+        canvas.sendToBack(img)
+        // Reset zoom/pan when a new photo is loaded
+        canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
+        setZoomLevel(1)
+        zoomLevelRef.current = 1
+        canvas.renderAll()
       },
       { crossOrigin: 'anonymous' },
     )
@@ -514,6 +576,35 @@ export default function MarkupCanvas({
     }
     canvas.renderAll()
   }, [activeTool, drawColor])
+
+  // ── Zoom controls ─────────────────────────────────────────────────────
+  const handleZoomIn = useCallback(() => {
+    const canvas = fabricRef.current
+    if (!canvas) return
+    const zoom = Math.min(canvas.getZoom() * 1.3, 5)
+    canvas.zoomToPoint(new fabric.Point(canvas.width! / 2, canvas.height! / 2), zoom)
+    const rounded = Math.round(zoom * 100) / 100
+    setZoomLevel(rounded)
+    zoomLevelRef.current = rounded
+  }, [])
+
+  const handleZoomOut = useCallback(() => {
+    const canvas = fabricRef.current
+    if (!canvas) return
+    const zoom = Math.max(canvas.getZoom() / 1.3, 0.5)
+    canvas.zoomToPoint(new fabric.Point(canvas.width! / 2, canvas.height! / 2), zoom)
+    const rounded = Math.round(zoom * 100) / 100
+    setZoomLevel(rounded)
+    zoomLevelRef.current = rounded
+  }, [])
+
+  const handleZoomReset = useCallback(() => {
+    const canvas = fabricRef.current
+    if (!canvas) return
+    canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
+    setZoomLevel(1)
+    zoomLevelRef.current = 1
+  }, [])
 
   // ── Undo: remove last markup ──────────────────────────────────────────
   const handleUndo = useCallback(() => {
@@ -723,6 +814,32 @@ export default function MarkupCanvas({
             </IconButton>
           </Tooltip>
 
+          <Divider flexItem sx={{ my: 0.5, mx: 1 }} />
+
+          <Tooltip title="Zoom in (scroll wheel)" placement="right">
+            <IconButton size="small" onClick={handleZoomIn}
+              sx={{ width: 40, height: 40, borderRadius: 1.5, color: 'text.secondary' }}
+            >
+              <ZoomInIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Zoom out" placement="right">
+            <IconButton size="small" onClick={handleZoomOut}
+              sx={{ width: 40, height: 40, borderRadius: 1.5, color: 'text.secondary' }}
+            >
+              <ZoomOutIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {zoomLevel !== 1 && (
+            <Tooltip title="Reset zoom" placement="right">
+              <IconButton size="small" onClick={handleZoomReset}
+                sx={{ width: 40, height: 40, borderRadius: 1.5, color: 'primary.main' }}
+              >
+                <ZoomOutMapIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.6rem', textAlign: 'center', px: 0.5, mt: 0.5 }}>
             {TOOLS.find((t) => t.type === activeTool)?.label}
           </Typography>
@@ -873,6 +990,33 @@ export default function MarkupCanvas({
             </Typography>
           </Box>
         )}
+
+        {/* Zoom level badge */}
+        {zoomLevel !== 1 && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 16,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 2,
+              bgcolor: 'rgba(0,0,0,0.55)',
+              color: 'white',
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 4,
+              backdropFilter: 'blur(4px)',
+              pointerEvents: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+            }}
+          >
+            <Typography variant="caption" fontWeight={600}>
+              {Math.round(zoomLevel * 100)}% — Alt+drag to pan
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* ── Horizontal toolbar (mobile) ─────────────────────────── */}
@@ -987,6 +1131,30 @@ export default function MarkupCanvas({
                 <SaveAltIcon />
               </IconButton>
             </Tooltip>
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: 'rgba(255,255,255,0.15)' }} />
+            <Tooltip title="Zoom in" placement="top">
+              <IconButton size="medium" onClick={handleZoomIn}
+                sx={{ flexShrink: 0, width: 52, height: 52, color: 'rgba(255,255,255,0.7)' }}
+              >
+                <ZoomInIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Zoom out" placement="top">
+              <IconButton size="medium" onClick={handleZoomOut}
+                sx={{ flexShrink: 0, width: 52, height: 52, color: 'rgba(255,255,255,0.7)' }}
+              >
+                <ZoomOutIcon />
+              </IconButton>
+            </Tooltip>
+            {zoomLevel !== 1 && (
+              <Tooltip title="Reset zoom" placement="top">
+                <IconButton size="medium" onClick={handleZoomReset}
+                  sx={{ flexShrink: 0, width: 52, height: 52, color: '#90CAF9' }}
+                >
+                  <ZoomOutMapIcon />
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
         </Box>
       )}
