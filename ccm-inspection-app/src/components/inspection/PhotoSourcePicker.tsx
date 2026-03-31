@@ -29,10 +29,10 @@ interface Props {
 
 export type PhotoSource = 'applicator_drawing' | 'satellite' | 'scratch' | 'upload'
 
-// ArcGIS World Imagery tile — Washington DC (guaranteed high-res coverage)
-// tile/{z}/{y}/{x} — zoom 17 centred on downtown DC
+// ArcGIS World Imagery export — Washington DC Federal Triangle area, 800×600 px
+// Using the MapServer export endpoint for a clean, full-resolution aerial image
 const SAMPLE_SATELLITE_URL =
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/17/50136/37507'
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-77.0469,38.8904,-77.0369,38.9004&bboxSR=4326&size=800,600&imageSR=4326&format=jpg&f=image'
 
 interface OptionCard {
   source: PhotoSource
