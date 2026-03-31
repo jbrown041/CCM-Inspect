@@ -29,10 +29,10 @@ interface Props {
 
 export type PhotoSource = 'applicator_drawing' | 'satellite' | 'scratch' | 'upload'
 
-// Static satellite imagery placeholder — a real integration would call a maps API
-// We use a free tile from OpenStreetMap-based services to show a realistic aerial feel
+// ArcGIS World Imagery tile — Washington DC (guaranteed high-res coverage)
+// tile/{z}/{y}/{x} — zoom 17 centred on downtown DC
 const SAMPLE_SATELLITE_URL =
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/17/49756/39561'
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/17/50136/37507'
 
 interface OptionCard {
   source: PhotoSource

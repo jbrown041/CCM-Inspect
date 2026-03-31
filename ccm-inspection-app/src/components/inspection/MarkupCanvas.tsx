@@ -474,13 +474,17 @@ export default function MarkupCanvas({
   useEffect(() => {
     const canvas = fabricRef.current
     if (!canvas || !photoUrl) return
-    fabric.Image.fromURL(photoUrl, (img) => {
-      bgImageRef.current = img
-      canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
-        scaleX: canvas.width! / (img.width ?? 1),
-        scaleY: canvas.height! / (img.height ?? 1),
-      })
-    })
+    fabric.Image.fromURL(
+      photoUrl,
+      (img) => {
+        bgImageRef.current = img
+        canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+          scaleX: canvas.width! / (img.width ?? 1),
+          scaleY: canvas.height! / (img.height ?? 1),
+        })
+      },
+      { crossOrigin: 'anonymous' },
+    )
   }, [photoUrl])
 
   // ── Photo file input handler ─────────────────────────────────────────
