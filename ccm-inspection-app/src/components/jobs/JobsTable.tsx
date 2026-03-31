@@ -4,6 +4,7 @@ import type { GridColDef, GridSortModel, GridRenderCellParams, GridRowParams } f
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import dayjs from 'dayjs'
 import type { Job } from '../../types'
+import InspectionStatusChip from '../common/InspectionStatusChip'
 
 interface Props {
   jobs: Job[]
@@ -20,6 +21,12 @@ function daysOld(dateStr: string | null): number | null {
   return dayjs().diff(dayjs(dateStr), 'day')
 }
 
+/** Derive the display status for the Inspection Status column */
+function displayStatus(job: Job) {
+  if (job.isScheduled && job.inspectionStatus === 'Not Started') return 'Scheduled'
+  return job.inspectionStatus
+}
+
 export default function JobsTable({
   jobs,
   onScheduleJob,
@@ -33,13 +40,13 @@ export default function JobsTable({
     {
       field: 'jobName',
       headerName: 'Job Name',
-      flex: 2,
-      minWidth: 200,
+      width: 220,
       renderCell: (params: GridRenderCellParams<Job>) => (
-        <Box sx={{ py: 1, lineHeight: 1 }}>
+        <Box sx={{ py: 1, lineHeight: 1, overflow: 'hidden', width: '100%' }}>
           <Typography
             variant="body2"
             fontWeight={600}
+            noWrap
             sx={{ color: 'primary.main', cursor: 'pointer', lineHeight: 1.35, display: 'block' }}
           >
             {params.row.jobName}
@@ -49,6 +56,36 @@ export default function JobsTable({
           </Typography>
         </Box>
       ),
+    },
+    {
+      field: 'inspectionStatus',
+      headerName: 'Inspection Status',
+      width: 160,
+      sortable: true,
+      renderCell: (params: GridRenderCellParams<Job>) => (
+        <InspectionStatusChip status={displayStatus(params.row)} />
+      ),
+    },
+    {
+      field: 'isScheduled',
+      headerName: 'Scheduled',
+      width: 165,
+      renderCell: (params: GridRenderCellParams<Job>) => {
+        const { isScheduled, assignedDate, scheduledTimeFrom, scheduledTimeTo } = params.row
+        if (!isScheduled || !assignedDate) return <Typography variant="body2" color="text.secondary">—</Typography>
+        return (
+          <Box sx={{ py: 1, lineHeight: 1 }}>
+            <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.35, display: 'block' }}>
+              {dayjs(assignedDate).format('MM/DD/YYYY')}
+            </Typography>
+            {scheduledTimeFrom && (
+              <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.3, display: 'block', mt: 0.25 }}>
+                {scheduledTimeFrom}{scheduledTimeTo ? ` – ${scheduledTimeTo}` : ''}
+              </Typography>
+            )}
+          </Box>
+        )
+      },
     },
     {
       field: 'assignedDate',
@@ -194,7 +231,28 @@ export default function JobsTable({
           display: 'flex',
           alignItems: 'center',
           borderBottom: 'none',
-          overflow: 'visible',
+          overflow: 'hidden',
+        },
+        // Sticky first column
+        '& .MuiDataGrid-cell[data-field="jobName"]': {
+          position: 'sticky',
+          left: 0,
+          zIndex: 1,
+          backgroundColor: 'white',
+          borderRight: '1px solid #E8E8E8',
+        },
+        '& .MuiDataGrid-row:hover .MuiDataGrid-cell[data-field="jobName"]': {
+          backgroundColor: '#F8FAFF',
+        },
+        '& .MuiDataGrid-row.Mui-selected .MuiDataGrid-cell[data-field="jobName"]': {
+          backgroundColor: '#EBF2FF',
+        },
+        '& .MuiDataGrid-columnHeader[data-field="jobName"]': {
+          position: 'sticky',
+          left: 0,
+          zIndex: 3,
+          backgroundColor: '#FAFAFA',
+          borderRight: '1px solid #E8E8E8',
         },
         '& .MuiDataGrid-footerContainer': {
           borderTop: '1px solid #E0E0E0',

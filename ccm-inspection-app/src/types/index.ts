@@ -1,4 +1,4 @@
-export type InspectionStatus = 'Not Started' | 'In Progress' | 'Completed' | 'Report Generated' | 'Requested' | 'Needs Follow-Up'
+export type InspectionStatus = 'Not Started' | 'In Progress' | 'Completed' | 'Report Generated' | 'Requested' | 'Needs Follow-Up' | 'Canceled' | 'On Hold'
 export type Brand = 'Bluey' | 'Yellowy'
 export type Severity = 'Low' | 'Medium' | 'High' | 'Critical'
 export type AnnotationType = 'pin' | 'free_draw' | 'line' | 'rectangle' | 'text' | 'numbered_callout'
