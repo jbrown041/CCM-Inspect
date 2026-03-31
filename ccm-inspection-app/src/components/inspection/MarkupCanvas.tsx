@@ -476,18 +476,20 @@ export default function MarkupCanvas({
     })
 
     // ── Mouse wheel: zoom ─────────────────────────────────────────────
-    canvas.on('mouse:wheel', (opt: any) => {
-      const delta = opt.e.deltaY
+    // Native listener with { passive: false } so preventDefault() is allowed
+    // (browsers make wheel events passive by default, blocking Fabric's preventDefault)
+    const upperCanvas = (canvas as any).upperCanvasEl as HTMLElement ?? canvasElRef.current!
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
       let zoom = canvas.getZoom()
-      zoom *= 0.999 ** delta
+      zoom *= 0.999 ** e.deltaY
       zoom = Math.max(0.5, Math.min(5, zoom))
-      canvas.zoomToPoint(new fabric.Point(opt.e.offsetX, opt.e.offsetY), zoom)
+      canvas.zoomToPoint(new fabric.Point(e.offsetX, e.offsetY), zoom)
       const rounded = Math.round(zoom * 100) / 100
       setZoomLevel(rounded)
       zoomLevelRef.current = rounded
-      opt.e.preventDefault()
-      opt.e.stopPropagation()
-    })
+    }
+    upperCanvas.addEventListener('wheel', onWheel, { passive: false })
 
     // ── ResizeObserver ────────────────────────────────────────────────
     const ro = new ResizeObserver((entries) => {
@@ -512,6 +514,7 @@ export default function MarkupCanvas({
 
     return () => {
       ro.disconnect()
+      upperCanvas.removeEventListener('wheel', onWheel)
       canvas.dispose()
       fabricRef.current = null
       markupObjMap.current.clear()
