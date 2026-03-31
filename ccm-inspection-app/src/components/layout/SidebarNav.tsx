@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { label: 'Schedule', icon: CalendarTodayOutlinedIcon, path: '/schedule' as string | null },
   // { label: 'Jobs',    icon: InventoryOutlinedIcon, path: null },   // hidden — restore later
   // { label: 'Catalog', icon: MenuBookOutlinedIcon,  path: null },   // hidden — restore later
-  { label: 'Account', icon: PersonOutlinedIcon, path: null },
+  { label: 'Account', icon: PersonOutlinedIcon, path: '/account' },
 ]
 
 function isActive(path: string | null, pathname: string): boolean {

@@ -4,6 +4,7 @@ import JobsPage from './components/jobs/JobsPage'
 import JobDetailsPage from './components/jobDetails/JobDetailsPage'
 import InspectionWizard from './components/inspection/InspectionWizard'
 import SchedulePage from './components/schedule/SchedulePage'
+import AccountPage from './components/account/AccountPage'
 
 export default function App() {
   return (
@@ -36,6 +37,14 @@ export default function App() {
           element={
             <AppLayout>
               <SchedulePage />
+            </AppLayout>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <AppLayout>
+              <AccountPage />
             </AppLayout>
           }
         />
