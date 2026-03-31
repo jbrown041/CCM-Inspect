@@ -57,8 +57,6 @@ export default function SidebarNav() {
         sx={{
           width: 44,
           height: 44,
-          borderRadius: '50%',
-          border: '2.5px solid #1565C0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -67,19 +65,12 @@ export default function SidebarNav() {
           flexShrink: 0,
         }}
       >
-        <Typography
-          sx={{
-            fontWeight: 900,
-            color: '#1565C0',
-            fontSize: '1.1rem',
-            letterSpacing: '-1px',
-            lineHeight: 1,
-            fontFamily: 'Georgia, serif',
-            fontStyle: 'italic',
-          }}
-        >
-          C
-        </Typography>
+        <Box
+          component="img"
+          src="/radius-logo.png"
+          alt="Radius"
+          sx={{ width: 44, height: 44, objectFit: 'contain' }}
+        />
       </Box>
 
       {/* Nav items */}
